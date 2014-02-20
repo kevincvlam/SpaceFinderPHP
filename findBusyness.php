@@ -27,8 +27,12 @@ function findBusyness ($building, $floor, $area){
 	echo "Error: Max Population is zero";
 	return 0;
 	}
-
+	
+	
 	switch ($busyness){
+	case $busyness == 0:
+			echo "Empty";
+			return 0;
 	case $busyness > 100:
 		   echo "Overcrowded";
 		   return 0;
