@@ -39,3 +39,8 @@ Route::get('test2', function()
 {
 	return View::make('test2');
 });
+
+Route::get('robarts', function()
+{
+	return View::make('robarts');
+});
