@@ -63,7 +63,7 @@ function getPopulation($building, $floor, $area, $connect){
 	}
 	//construct query:
 	$query  = "SELECT SUM(activeconn) FROM populations WHERE apn IN (SELECT apn FROM buildings";
-	$query = $query . " WHERE timestamp = '2014-02-06 13:49:11'"; //**********************in future time will change to *timestamp < NOW()-5000* which means entries in the past five minutes
+	$query = $query . " WHERE timestamp > NOW() - INTERVAL 5 MINUTE"; //**********************in future time will change to *timestamp < NOW()-5000* which means entries in the past five minutes
 	if($building) $query = $query . " AND bname = '" . $building;			//remember single quotes for sql query
 	if($floor) $query = $query . "' AND bfloor = '" . $floor;
 	if($area) $query = $query . "' AND barea = '" . $area;
@@ -109,4 +109,70 @@ function getMaxPop($building, $floor, $area, $connect){
 	return 0;
 }
 
+//update.php
+//this is a php file that updates values in the populations table
+//for Robarts Library demo
+//NOTE: usually this would be done as a scheduled SQL query on the
+//server, but we do not yet have a server and the data that is 
+//being given to us is on a webpage rather than in a SQL database
+//
+//This function is expected to be called from a batch file that will
+//be called by the windows scheduler...again this is usually an SQL
+//subroutine called by the server task scheduler
+
+function update(){
+	//establish and check connection to database spacedb
+	$con = connectToDB();
+	if($con->errno) return $con->errno;
+	
+	//ADD NEW INFORMATION TO THE TABLE
+	
+	//set up a query to get all of the Access Points that we are actively checking
+	$query = "SELECT apn FROM buildings";
+	$result = $con->query($query);
+	
+	//get information from webpage
+	$livedata = file_get_contents('http://info.wireless.utoronto.ca/rob/');
+	/*//test file_get_contents
+	echo $livedata;*/
+	
+	while($apn = $result->fetch_array()){
+		//set id to search for
+		$id = $apn[0];
+		//find position of id in livedata
+		$pos = strpos($livedata, $id);
+		//parse line; four elements delimted by commas; get positions of commas
+		$pos2 = strpos($livedata, ",",$pos);
+		$pos3 = strpos($livedata, ",",$pos2+1);
+		$pos4 = strpos($livedata, ",",$pos3+1);
+		//find the next line break
+		$pos_end = strpos($livedata, "<BR>", $pos3);
+		
+		//parse data (NOTE minus and plus ones account for commas
+		$num_conns = (int) substr($livedata, ($pos3+1),($pos4-$pos3-1));
+		$timestamp = substr($livedata, ($pos4+1),($pos_end-$pos4-1));
+		
+		/* //test parsing
+		echo $id . "..." . $num_conns . "..." . $timestamp . "<BR>"; */
+		
+		//write data into database
+		$query = "INSERT INTO populations
+		VALUES('$id','$num_conns','$timestamp')";
+		if(!($con->query($query))){
+		echo "<br> insert query error <br>";
+		return 1;
+		}		
+	}
+	$result->close();
+	
+	//DELETE OLD INFORMATION FROM THE TABLE
+	$query = "DELETE FROM populations WHERE timestamp < (NOW() - INTERVAL 14 DAY)";
+	if(!($con->query($query))){
+		echo "<br> delete query error <br>";
+		return 1;
+	}		
+	
+	//RETURN 0 NO ERROR
+	return 0;
+}
 ?>
