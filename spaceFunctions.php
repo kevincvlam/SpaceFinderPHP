@@ -54,6 +54,7 @@ echo "</table>";
 //expects first three values to be a string or null if not specified
 //$connect is expected to be a mysqli class (database connection)
 //returns an integer representing the population
+//does not close the connection passed to it
 
 function getPopulation($building, $floor, $area, $connect){
 	//check for errors on connection
@@ -62,12 +63,16 @@ function getPopulation($building, $floor, $area, $connect){
 		exit();
 	}
 	//construct query:
-	$query  = "SELECT SUM(activeconn) FROM populations WHERE apn IN (SELECT apn FROM buildings";
-	$query = $query . " WHERE timestamp > NOW() - INTERVAL 5 MINUTE"; //**********************in future time will change to *timestamp < NOW()-5000* which means entries in the past five minutes
-	if($building) $query = $query . " AND bname = '" . $building;			//remember single quotes for sql query
+	$query  = "SELECT SUM(activeconn) FROM populations WHERE apn IN (SELECT apn FROM buildings";  //main query
+	if($building) $query = $query . " WHERE bname = '" . $building;			//subquery
 	if($floor) $query = $query . "' AND bfloor = '" . $floor;
 	if($area) $query = $query . "' AND barea = '" . $area;
 	$query = $query . "')";
+	$query = $query . " AND timestamp = (SELECT MAX(timestamp) FROM populations)"; //get most recent timestamp //in main query
+								//NOTE: the assumption here is that during the most recent update 
+								// 		all entries were updated simultaneously
+								//   	otherwise the max timestamp query will have to be more specific
+	
 		
 	//call query
 	if($result = $connect->query($query)){					//if successful result
