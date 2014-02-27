@@ -1,7 +1,7 @@
 <?php
 function connectToDB(){
 // Create connection to spacefinder database
-$con=mysqli_connect("localhost","root","root","spacedb");
+$con=mysqli_connect("localhost","kevincvl_sf","spacefinder","kevincvl_spacefinder");
 
 // Check connection
 if (mysqli_connect_errno())
