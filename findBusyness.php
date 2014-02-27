@@ -28,29 +28,25 @@ function findBusyness ($building, $floor, $area){
 	return 0;
 	}
 	
+	// echo "<br> busyness is : " . $busyness . "<br>";  //display busyness for testing
 	
-	switch ($busyness){
-	case $busyness == 0:
-			echo "Empty";
-			return 0;
-	case $busyness > 100:
+	if ($busyness > 100){
 		   echo "Overcrowded";
 		   return 0;
-	case $busyness > 70 && $busyness <=100 :
+	}elseif ($busyness > 70 && $busyness <=100){
 		   echo "Extremely Busy";
 		   return 0;
-	case $busyness > 50 && $busyness <=75 :
+	}elseif ($busyness > 50 && $busyness <=75){
 		   echo "Busy";
 		   return 0;
-
-	case $busyness > 10 && $busyness <=50 :
+	}elseif ($busyness > 10 && $busyness <=50){
 		   echo "Normal";
 		   return 0;
-
-	case $busyness <=  10 :
-		   echo "Empty";
-		   return 0;
+	}else{
+		echo "Empty";
+		return 0;
 	}
+	
 	if ($con) $con->close;
 
 return 1;		//return 1 if the case statement did not work

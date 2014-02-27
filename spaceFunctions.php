@@ -63,17 +63,18 @@ function getPopulation($building, $floor, $area, $connect){
 		exit();
 	}
 	//construct query:
-	$query  = "SELECT SUM(activeconn) FROM populations WHERE apn IN (SELECT apn FROM buildings";  //main query
-	if($building) $query = $query . " WHERE bname = '" . $building;			//subquery
-	if($floor) $query = $query . "' AND bfloor = '" . $floor;
-	if($area) $query = $query . "' AND barea = '" . $area;
-	$query = $query . "')";
-	$query = $query . " AND timestamp = (SELECT MAX(timestamp) FROM populations)"; //get most recent timestamp //in main query
-								//NOTE: the assumption here is that during the most recent update 
-								// 		all entries were updated simultaneously
-								//   	otherwise the max timestamp query will have to be more specific
+	$query  = "SELECT SUM(activeconn) FROM	";						//summing query	
+	$query = $query . "(SELECT apn, activeconn, MAX(timestamp) FROM populations		
+	WHERE apn IN (SELECT apn FROM buildings";  								//building info subquery
+	if($building) $query = $query . " WHERE bname = '" . $building;			//building info subquery
+	if($floor) $query = $query . "' AND bfloor = '" . $floor;				//building info subquery
+	if($area) $query = $query . "' AND barea = '" . $area;					//building info subquery
+	$query = $query . "')";													//building info subquery
+	$query = $query . " GROUP BY apn) as relevantVals";				
 	
-		
+	//echo $query;   //display query for testing
+	
+	
 	//call query
 	if($result = $connect->query($query)){					//if successful result
 		$row = $result->fetch_array();							//return result
